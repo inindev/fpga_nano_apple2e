@@ -106,6 +106,13 @@ set_option -mspi_jump 0
 set_option -cst_warn_to_error 1
 set_option -rpt_auto_place_io_info 1
 set_option -correct_hold_violation 1
+# Readable outputs (the synthesis .vg netlist is always encrypted by Gowin):
+#   impl/pnr/*.vo   plain gate-level netlist after place & route
+#   impl/pnr/*.posp block RAM / DSP placement, one line per instance
+#   impl/pnr/*.tr   timing report as plain text
+set_option -gen_verilog_sim_netlist 1
+set_option -gen_posp 1
+set_option -gen_text_timing_rpt 1
 
 #run syn
 run all
