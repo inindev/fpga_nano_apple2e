@@ -62,9 +62,12 @@ always @(posedge clk2) begin
 	reg old_change;
 	reg saving;
 	reg dirty;
+	reg old_reset;
+	reg reload;
 
 	old_change <= change;
 	old_ack <= sd_ack;
+	old_reset <= reset;
 
 	if(sd_ack) {sd_rd,sd_wr} <= 0;
 
@@ -78,17 +81,12 @@ always @(posedge clk2) begin
 		sd_wr <= 0;
 		saving<= 0;
 		dirty <= 0;
+		reload <= 0;
 	end
-	else
-	if(reset) begin
-		cur_track <= 'b111111;
-		busyi  <= 0;
-		sd_rd <= 0;
-		sd_wr <= 0;
-		saving<= 0;
-		dirty <= 0;
-	end
-	else
+	else begin
+	// reload the track once reset is released; a dirty track is
+	// saved first instead of being discarded
+	if(old_reset & ~reset) reload <= 1;
 
 	if(busyi) begin
 		if(old_ack && ~sd_ack) begin
@@ -105,6 +103,7 @@ always @(posedge clk2) begin
 				rel_lba <= 0;
                 lba <= trackD2 * 8'd13; //track size = 1a00h = 13*512
 				sd_rd <= 1;
+				reload <= 0;
 			end
 			else
 			begin
@@ -114,7 +113,7 @@ always @(posedge clk2) begin
 		end
 	end
 	else
-	if(readyi && ((cur_track != trackD2) || (old_change && ~change) || (dirty && ~activeD2)))
+	if(readyi && ((cur_track != trackD2) || (old_change && ~change) || (dirty && ~activeD2) || reload))
 		if (dirty && cur_track != 'b111111) begin
 			saving <= 1;
 			lba <= cur_track * 8'd13;
@@ -131,7 +130,9 @@ always @(posedge clk2) begin
 			sd_rd <= 1;
 			busyi <= 1;
 			dirty <= 0;
+			reload <= 0;
 		end
+	end
 end
 
 
