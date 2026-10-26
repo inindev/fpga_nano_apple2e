@@ -25,7 +25,7 @@
 module sdram
 (
 	output            SDRAM_CLK,
-	inout  reg [31:0] SDRAM_DQ,   // 16 bit bidirectional data bus
+	inout      [31:0] SDRAM_DQ,   // 32 bit bidirectional data bus
 	output reg [10:0] SDRAM_A,    // 11 bit multiplexed address bus
 	output reg  [3:0] SD_DQM,
 	output reg  [1:0] SDRAM_BA,   // two banks
@@ -49,7 +49,21 @@ module sdram
 );
 
 reg [1:0] ds;
-assign SDRAM_CLK = ~clk;
+
+// SDRAM clock = inverted clk, driven from an output DDR register so its
+// phase at the SDRAM is fixed rather than depending on fabric routing
+ODDR #(
+	.TXCLK_POL(1'b0),
+	.INIT(1'b0)
+) sdramclk_ddr (
+	.Q0(SDRAM_CLK),
+	.Q1(),
+	.D0(1'b0),
+	.D1(1'b1),
+	.TX(1'b0),
+	.CLK(clk)
+);
+
 assign SDRAM_CKE = 1;
 assign SDRAM_nCS = 0;
 assign ds = aux?2'b01:2'b10;
@@ -74,6 +88,9 @@ reg [21:0] a;
 reg        wr;
 reg        ram_req=0;
 reg [31:0] data;
+reg  [7:0] wdata;    // write data, latched with the request
+reg [31:0] dq_out;
+reg        dq_oe = 0;
 
 // access manager
 always @(posedge clk) begin
@@ -91,12 +108,16 @@ always @(posedge clk) begin
             ram_req <= 1;
             wr <= we;
             a <= addr;
+            wdata <= din;
         end
     end
 
     q <= q + 3'd1;
-    if(old_ref ^ clkref) begin
-        if (clkref) q <= 0;
+    // One access per clkref period. q wraps once more before the next
+    // rising edge, and that empty second slot is the SDRAM's only refresh,
+    // so don't re-arm requests within the period (e.g. on the falling edge).
+    if(~old_ref & clkref) begin
+        q <= 0;
         old_rd <= 0;
         old_we <= 0;
     end
@@ -142,11 +163,19 @@ localparam CMD_LOAD_MODE       = 3'b000;
 
 assign dout = a[0]?data[15:0]:data[31:16];
 
-assign SDRAM_DQ = (ram_req == 1'b1 && wr == 1'b1 && mode == MODE_NORMAL && q == STATE_CONT) ? {din, din, din, din} : 32'bzzzz_zzzz_zzzz_zzzz_zzzz_zzzz_zzzz_zzzz;
+// The SDRAM samples the WRITE command and its data at the same edge, so
+// both are registered together.
+assign SDRAM_DQ = dq_oe ? dq_out : 32'bz;
 
 // SDRAM state machines
 always @(posedge clk) begin
-	if(q == STATE_START) begin 
+	dq_oe <= 1'b0;
+	if(ram_req && wr && mode == MODE_NORMAL && q == STATE_CONT) begin
+		dq_out <= {wdata, wdata, wdata, wdata};
+		dq_oe  <= 1'b1;
+	end
+
+	if(q == STATE_START) begin
 		SDRAM_BA <= (mode == MODE_NORMAL) ? a[21:20] : 2'b00;
 		SD_DQM <= (!we)?4'b0000:a[0]?{2'b11,ds}:{ds,2'b11};
 	end
