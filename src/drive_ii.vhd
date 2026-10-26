@@ -47,6 +47,7 @@ architecture rtl of drive_ii is
   signal track_byte_addr : unsigned(12 downto 0);
   signal data_reg : unsigned(7 downto 0);
   signal reset_data_reg : std_logic;
+  signal write_dly : std_logic_vector(1 downto 0);  -- delays TRACK_WE, see read_head
 
 begin
 
@@ -131,8 +132,15 @@ begin
       track_byte_addr <= (others => '0');
       byte_delay := (others => '0');
       reset_data_reg <= '0';
-    elsif rising_edge(CLK_14M) then
+      write_dly <= (others => '0');
       TRACK_WE <= '0';
+    elsif rising_edge(CLK_14M) then
+      -- TRACK_WE is raised two clocks after the address steps. The RAM may
+      -- sample it a clock early or late (almost no hold margin), so address
+      -- and data must stay stable around it, or bits of the new byte land in
+      -- the previous one.
+      write_dly <= write_dly(0) & '0';
+      TRACK_WE <= write_dly(1);
 
       CLK_2M_D <= CLK_2M;
       if CLK_2M = '1' and CLK_2M_D = '0' and DISK_READY = '1' and DISK_ACTIVE = '1' then
@@ -160,7 +168,7 @@ begin
           -- write mode
           if WRITE_REG = '1' then data_reg <= D_IN; end if;
           if READ_DISK = '1' and PHASE_ZERO = '1' then
-            TRACK_WE <= not TRACK_BUSY;
+            write_dly(0) <= not TRACK_BUSY;
             if track_byte_addr = X"19FF" then
               track_byte_addr <= (others => '0');
             else
