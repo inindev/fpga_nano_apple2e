@@ -11,7 +11,7 @@ add_file src/floppy_track.sv
 add_file src/gen_uart.v
 add_file src/gowin_dpb/gowin_dpb_trkbuf.v
 add_file src/gowin_dpb/sector_dpram.v
-add_file src/gowin_prom/gowin_prom_uc.v
+add_file mouse/jt6805/jt6805_ucode.v
 add_file src/gowin_sp/gowin_sp_128b.v
 add_file src/hdmi/audio_clock_regeneration_packet.sv
 add_file src/hdmi/audio_info_frame.sv

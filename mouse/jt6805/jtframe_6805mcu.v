@@ -68,8 +68,6 @@ assign tirq     = tcr[TIR] & ~tcr[TIM]; // 6 => mask
 assign prfull   = { pres, fpin };
 assign prmx     = prfull[tcr[2:0]];
 
-assign tstop = 0;
-
 // Address decoder
 always @(*) begin
     rom_cs    = addr>=128;
