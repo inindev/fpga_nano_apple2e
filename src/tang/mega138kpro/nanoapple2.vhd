@@ -315,6 +315,11 @@ signal sd_rd_byte_strobe : std_logic;
 signal sd_byte_index  : std_logic_vector(8 downto 0);
 signal sd_rd_data     : std_logic_vector(7 downto 0);
 signal sd_wr_data     : std_logic_vector(7 downto 0);
+signal sd_rstart      : std_logic_vector(7 downto 0);
+signal sd_wstart      : std_logic_vector(7 downto 0);
+signal sd_busy_v      : std_logic_vector(4 downto 0);
+signal sd_done_v      : std_logic_vector(4 downto 0);
+signal sd_strobe_v    : std_logic_vector(4 downto 0);
 signal disk_chg_trg   : std_logic;
 signal sector             : unsigned(15 downto 0);
 signal hdd_mounted        : std_logic := '0';
@@ -808,8 +813,35 @@ joy_an <= (posy & posx) when system_analogxy = '1' else (posx & posy);
     );
 
 SD_LBA3 <= std_logic_vector( x"0000" & sector);
-sd_lba <= SD_LBA4 when (sd_rd(4) or sd_wr(4) or sd_rd(3) or sd_wr(3)) = '1' else SD_LBA3 when (sd_rd(2) or sd_wr(2)) = '1' else SD_LBA2 when (sd_rd(1) or sd_wr(1)) = '1' else SD_LBA1;
-sd_wr_data <= SD_DATA_IN3 when (sd_rd(2) or sd_wr(2)) = '1' else SD_DATA_IN2 when (sd_rd(1) or sd_wr(1)) = '1' else SD_DATA_IN1;
+-- one SD card request at a time; busy/done/strobe go only to the owner
+sd_arb_inst: entity work.sd_arbiter
+  port map (
+    clk        => clk_sys,
+    rstn       => pll_locked,
+
+    -- 0: floppy 1, 1: floppy 2, 2: hdd, 3: rom loader, 4: palette loader
+    req_rd     => sd_rd(4 downto 0),
+    req_wr     => sd_wr(4 downto 0),
+    req_lba0   => SD_LBA1,
+    req_lba1   => SD_LBA2,
+    req_lba2   => SD_LBA3,
+    req_lba3   => SD_LBA4,
+    req_lba4   => SD_LBA4,
+    req_data0  => SD_DATA_IN1,
+    req_data1  => SD_DATA_IN2,
+    req_data2  => SD_DATA_IN3,
+    req_busy   => sd_busy_v,
+    req_done   => sd_done_v,
+    req_strobe => sd_strobe_v,
+
+    sd_rstart  => sd_rstart,
+    sd_wstart  => sd_wstart,
+    sd_sector  => sd_lba,
+    sd_inbyte  => sd_wr_data,
+    sd_busy    => sd_busy,
+    sd_done    => sd_done,
+    sd_strobe  => sd_rd_byte_strobe
+  );
 sd_rd(7 downto 5) <= (others => '0');
 sd_wr(7 downto 5) <= (others => '0');
 
@@ -878,12 +910,12 @@ sdcard_interface1: entity work.floppy_track port map (
     sd_buff_addr => sd_byte_index,
     sd_buff_dout => sd_rd_data,
     sd_buff_din  => SD_DATA_IN1,
-    sd_buff_wr   => sd_rd_byte_strobe,
+    sd_buff_wr   => sd_strobe_v(0),
 
     sd_lba       => SD_LBA1,
     sd_rd        => sd_rd(0),
     sd_wr        => sd_wr(0),
-    sd_ack       => sd_busy
+    sd_ack       => sd_busy_v(0)
 );
 
 sdcard_interface2: entity work.floppy_track port map (
@@ -906,12 +938,12 @@ sdcard_interface2: entity work.floppy_track port map (
     sd_buff_addr => sd_byte_index,
     sd_buff_dout => sd_rd_data,
     sd_buff_din  => SD_DATA_IN2,
-    sd_buff_wr   => sd_rd_byte_strobe,
+    sd_buff_wr   => sd_strobe_v(1),
 
     sd_lba       => SD_LBA2,
     sd_rd        => sd_rd(1),
     sd_wr        => sd_wr(1),
-    sd_ack       => sd_busy
+    sd_ack       => sd_busy_v(1)
     );
 
   disk : entity work.disk_ii port map (
@@ -991,7 +1023,7 @@ sdcard_interface2: entity work.floppy_track port map (
     ram_addr       => unsigned(sd_byte_index),
     ram_di         => unsigned(sd_rd_data),
     unsigned(ram_do)=> SD_DATA_IN3,
-    ram_we          => sd_rd_byte_strobe and sd_busy
+    ram_we          => sd_strobe_v(2)
     );
 
 process(clk_core)
@@ -1017,7 +1049,7 @@ process(clk_sys, dd_reset)
       hdd_writeD <= hdd_write;
       hdd_writeD2 <= hdd_writeD;
 
-      old_ack <= sd_busy;
+      old_ack <= sd_busy_v(2);
     	hdd_read_pending <= '1' when hdd_read_pending = '1' or (hdd_readD = '0' and hdd_readD2 = '1') else '0';
     	hdd_write_pending <= '1' when hdd_write_pending = '1' or (hdd_writeD = '0' and hdd_writeD2 = '1') else '0';
 
@@ -1035,12 +1067,12 @@ process(clk_sys, dd_reset)
           cpu_wait_hddD2 <= '1';
         end if;
       elsif state = "10" then
-        if old_ack = '0' and sd_busy = '1' then
+        if old_ack = '0' and sd_busy_v(2) = '1' then
           hdd_read_pending <= '0';
           hdd_write_pending <= '0';
           sd_rd(2) <= '0';
           sd_wr(2) <= '0';
-        elsif old_ack = '1' and sd_busy = '0' then
+        elsif old_ack = '1' and sd_busy_v(2) = '0' then
           state <= "00";
           cpu_wait_hddD2 <= '0';
         end if;
@@ -1389,8 +1421,8 @@ generic map (
     image_mounted   => sd_img_mounted,
 
     -- user read sector command interface (sync with clk)
-    rstart          => sd_rd,
-    wstart          => sd_wr, 
+    rstart          => sd_rstart,
+    wstart          => sd_wstart, 
     rsector         => sd_lba,
     rbusy           => sd_busy,
     rdone           => sd_done,
@@ -1410,12 +1442,12 @@ generic map (
     sd_lba            => SD_LBA4,
     sd_rd             => sd_rd(4 downto 3),
     sd_wr             => sd_wr(4 downto 3),
-    sd_busy           => sd_busy,
-    sd_done           => sd_done,
+    sd_busy           => sd_busy_v(3) or sd_busy_v(4),
+    sd_done           => sd_done_v(3) or sd_done_v(4),
   
     sd_byte_index     => sd_byte_index,
     sd_rd_data        => sd_rd_data,
-    sd_rd_byte_strobe => sd_rd_byte_strobe,
+    sd_rd_byte_strobe => sd_strobe_v(3) or sd_strobe_v(4),
   
     sd_img_mounted    => sd_img_mounted(4 downto 3),
     loader_busy       => loader_busy,

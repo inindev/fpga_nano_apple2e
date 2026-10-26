@@ -29,6 +29,7 @@ add_file src/misc/mcu_spi.v
 add_file src/misc/osd_u8g2.v
 add_file src/misc/scandoubler.v
 add_file src/misc/sd_card.v
+add_file src/misc/sd_arbiter.v
 add_file src/misc/sd_rw.v
 add_file src/misc/sdcmd_ctrl.v
 add_file src/misc/sysctrl.v
