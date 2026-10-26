@@ -864,10 +864,11 @@ variable reset_cnt : integer range 0 to 2147483647;
           disk_chg_trg <= '1';
     end if;
 
+    -- floppies only accept .nib images: 35 tracks x $1A00 bytes = 232960
     if sd_img_mounted(0) = '1' then
-        DISK_MOUNT(0) <= '0' when unsigned(sd_img_size) = 0 else '1';
+        DISK_MOUNT(0) <= '1' when unsigned(sd_img_size) = 232960 else '0';
     elsif sd_img_mounted(1) = '1' then
-        DISK_MOUNT(1) <= '0' when unsigned(sd_img_size) = 0 else '1';
+        DISK_MOUNT(1) <= '1' when unsigned(sd_img_size) = 232960 else '0';
     elsif sd_img_mounted(2) = '1' then
       hdd_mounted <= '0' when unsigned(sd_img_size) = 0 else '1';
       hdd_protect <= system_hdd_prot;
