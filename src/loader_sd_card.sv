@@ -141,7 +141,8 @@ reg [2:0] img_select;
 
 		READING: 
 			begin
-				if(ioctl_addr <= img_size[img_select])
+				// addr is the next byte to write
+				if(addr < img_size[img_select])
 					io_state <= READ_NEXT;
 				else 
 				begin
@@ -160,7 +161,8 @@ reg [2:0] img_select;
 						ioctl_addr <= addr;
 						addr <= addr + 1'd1;
 						cnt <= cnt + 1'd1;
-						if(cnt == 511) 
+						// fetch the next sector only if the image continues
+						if(cnt == 511 && addr + 1'd1 < img_size[img_select])
 							begin
 								sd_lba <= sd_lba + 1'd1;
 								ch_timeout <= 32'd1;
