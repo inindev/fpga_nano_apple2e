@@ -41,6 +41,9 @@ module sd_card # (
     output reg [63:0] image_size,
     // up to four images supported (e.g. 2x floppy, 2xACSI)
     output reg [7:0]  image_mounted,
+    // image format announced by the MCU (CMD 9), valid with image_mounted:
+    // 0 unspecified, 1 Apple II DOS order (.dsk/.do), 2 ProDOS order (.po)
+    output reg [1:0]  image_format,
 
     // read sector command interface (sync with clk), this once was
     // directly tied to the sd card. Now this goes to the MCU via the
@@ -71,6 +74,8 @@ reg [7:0] command;
 reg [3:0] byte_cnt;  
 
 reg [7:0] image_target; 
+reg [7:0] format_target;
+reg [1:0] format_next;
 
 reg	  rstart_int;   
 reg	  wstart_int;   
@@ -222,6 +227,8 @@ always @(posedge clk) begin
       wstart_int <= 1'b0;
       image_size <= 64'd0;
       image_mounted <= 8'b00000000;
+      image_format <= 2'd0;
+      format_next <= 2'd0;
 	  dinb_we <=1'b0;
 
 	  // no MCU or core request by now
@@ -428,6 +435,9 @@ always @(posedge clk) begin
 					 direct_start[image_target] <= 32'd0;
 					 image_mounted[image_target] <= 1'b1;
 				  end
+				  // a format applies only to the insert that follows it for the same image
+				  image_format <= (format_target == image_target) ? format_next : 2'd0;
+				  format_next <= 2'd0;
 			   end
 			end
 			
@@ -490,7 +500,15 @@ always @(posedge clk) begin
 					 direct_start[image_target] <= 32'd0;
                      image_mounted[image_target] <= 1'b1;
 				  end
+                  image_format <= 2'd0;
+                  format_next <= 2'd0;
                end
+            end
+
+            // SDC CMD 9: IMAGE FORMAT, sent right before CMD 4 for the same image
+            if(command == 8'd9) begin
+               if(byte_cnt == 4'd0) format_target <= data_in;
+               if(byte_cnt == 4'd1) format_next <= data_in[1:0];
             end
 			
 			if(byte_cnt != 4'd15) byte_cnt <= byte_cnt + 4'd1;    

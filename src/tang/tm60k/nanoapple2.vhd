@@ -304,6 +304,8 @@ signal system_screen  : std_logic_vector(1 downto 0);
 signal system_scanlines : std_logic_vector(1 downto 0);
 signal system_volume  : std_logic_vector(1 downto 0);
 signal sd_img_size    : std_logic_vector(63 downto 0);
+signal sd_img_format  : std_logic_vector(1 downto 0);
+signal DISK_FMT0, DISK_FMT1 : std_logic_vector(1 downto 0);
 signal sd_img_mounted : std_logic_vector(7 downto 0);
 signal sd_busy        : std_logic;
 signal sd_busyD, sd_busyD2 : std_logic;
@@ -832,11 +834,18 @@ variable reset_cnt : integer range 0 to 2147483647;
           disk_chg_trg <= '1';
     end if;
 
-    -- floppies only accept .nib images: 35 tracks x $1A00 bytes = 232960
+    -- floppies take .nib images (35 tracks x $1A00 bytes = 232960), or
+    -- .dsk/.do/.po (35 x 16 x 256 = 143360) with the format the MCU announced
     if sd_img_mounted(0) = '1' then
-        DISK_MOUNT(0) <= '1' when unsigned(sd_img_size) = 232960 else '0';
+        DISK_MOUNT(0) <= '1' when (unsigned(sd_img_size) = 232960 and sd_img_format = "00")
+                               or (unsigned(sd_img_size) = 143360 and (sd_img_format = "01" or sd_img_format = "10"))
+                             else '0';
+        DISK_FMT0 <= sd_img_format;
     elsif sd_img_mounted(1) = '1' then
-        DISK_MOUNT(1) <= '1' when unsigned(sd_img_size) = 232960 else '0';
+        DISK_MOUNT(1) <= '1' when (unsigned(sd_img_size) = 232960 and sd_img_format = "00")
+                               or (unsigned(sd_img_size) = 143360 and (sd_img_format = "01" or sd_img_format = "10"))
+                             else '0';
+        DISK_FMT1 <= sd_img_format;
     elsif sd_img_mounted(2) = '1' then
       hdd_mounted <= '0' when unsigned(sd_img_size) = 0 else '1';
       hdd_protect <= system_hdd_prot;
@@ -873,6 +882,7 @@ sdcard_interface1: entity work.floppy_track port map (
     busy         => TRACK1_RAM_BUSY,
     change       => DISK_CHANGE(0),
     mount        => DISK_MOUNT(0),
+    format       => DISK_FMT0,
     ready        => DISK_READY(0),
     active       => D1_ACTIVE,
 
@@ -901,6 +911,7 @@ sdcard_interface2: entity work.floppy_track port map (
     busy         => TRACK2_RAM_BUSY,
     change       => DISK_CHANGE(1),
     mount        => DISK_MOUNT(1),
+    format       => DISK_FMT1,
     ready        => DISK_READY(1),
     active       => D2_ACTIVE,
 
@@ -1384,6 +1395,7 @@ generic map (
     -- translate between sector/track/side and lba sector
     image_size      => sd_img_size,
     image_mounted   => sd_img_mounted,
+    image_format    => sd_img_format,
 
     -- user read sector command interface (sync with clk)
     rstart          => sd_rstart,

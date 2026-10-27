@@ -8,6 +8,7 @@ add_file mouse/jt6805/jtframe_6805mcu.v
 add_file mouse/pia6821.vhd
 add_file src/dualshock2.v
 add_file src/floppy_track.sv
+add_file src/nib_codec.sv
 add_file src/gen_uart.v
 add_file src/gowin_dpb/gowin_dpb_trkbuf.v
 add_file src/gowin_dpb/sector_dpram.v

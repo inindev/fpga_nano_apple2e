@@ -28,7 +28,7 @@ Features:
 * [USB XBOX 360 Controller](https://en.wikipedia.org/wiki/Xbox_360_controller)
 * [Dualshock 2 Controller Gamepad](https://en.wikipedia.org/wiki/DualShock) for [MiSTeryShield20k / MiSTeryShield20kPico](https://github.com/harbaum/MiSTeryNano/tree/main/board/misteryshield20k/README.md) via spare [pinheader](/board/misteryshield20k_ds2_adapter/misteryshield20k_ds2_adapter_cable.md)
 * [USB Mouse](https://en.wikipedia.org/wiki/Computer_mouse) as AppleMouse or as Joystick
-* Disk loading via OSD. supported formats: **.NIB**
+* Disk loading via OSD. supported formats: **.NIB**, **.DSK**, **.DO**, **.PO** (140K, 16 sectors)
 * HDD loading via OSD. supported formats: **.HDV** (raw ProDOS partition images, 32MB)
 * Selectable 6502 or 65C02 CPU
 * Joystick support (analog proportional)
@@ -51,8 +51,8 @@ Features:
 <img src="./.assets/apple2.png" alt="image" width="80%" height="auto">
 
 > [!TIP]
-> Be aware that this core loads **.NIB** Disk Drive images only identical to the MIST core.  
-> On the fly conversion from .DSK as the MISTer core is doing using Linux host system is not supported. 
+> .DSK, .DO and .PO images are converted to disk bytes in the FPGA, one track at a time, and
+> writes are converted back. This needs an FPGA Companion firmware that reports the image format.
 
 ## Tang Console 60k / 138K NEO
 
@@ -96,7 +96,10 @@ The installation on the Tang Nano 20k board can be done using a Linux PC or a Wi
 
 ## Disk format notes
 
-Use [dsk2nib](https://github.com/slotek/dsk2nib) to convert AppleII disk images to .nib images.  
+Floppy images can be .nib (disk bytes, 232960 bytes) or 140K sector images: .dsk/.do in DOS 3.3
+sector order, .po in ProDOS sector order. The sector order comes from the file extension.
+A sector image only holds sector data: when it is written back, anything else on the track,
+such as copy protection, is lost. Use .nib for those disks.
 
 For HDD, only HDV images (raw ProDOS partition images) 32MB in size are supported.  
 A Cold Reset is needed to boot from HDD.
@@ -112,7 +115,7 @@ On the "Apple ][" boot screen open the OSD with F12 and choose a disk. It will b
 If you OSD press ```reset``` you'll enter Applesoft with the ] prompt.
 From here you have some limited commands. See: http://www.landsnail.com/a2ref.htm.
 
-If you want to boot another disk choose a .nib image via the osd and type the following:
+If you want to boot another disk choose a disk image via the osd and type the following:
 
 ```
 ]PR#6
