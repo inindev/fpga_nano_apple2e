@@ -48,151 +48,154 @@
     </action>
   </actions>
   
-  <menu label="Nano Apple IIe">
- <button label="Cold Reset" action="cold_reset_hide"/>
-    <menu label="System">
-      <list label="Joyport:" id="Q" default="0">
- <listentry label="USB #1" value="0"/>
- <listentry label="USB #2" value="1"/>
- <listentry label="DS2 #1" value="2"/>
- <listentry label="DS2 #2" value="3"/>
- <listentry label="Mouse" value="4"/>
- <listentry label="Off" value="5"/>
+  <menu label="Apple IIe">
+    <fileselector label="Disk 1" ext="nib;dsk;do;po" index="0" default="disk0.nib"/>
+    <fileselector label="Disk 2" ext="nib;dsk;do;po" index="1" default="disk1.nib"/>
+    <fileselector label="Hard disk" ext="hdv" index="2" default="hdd.hdv"/>
+    <menu label="Machine">
+      <list label="CPU" id="M" default="0" action="cold_reset_hide">
+	<listentry label="6502" value="0"/>
+	<listentry label="65C02" value="1"/>
       </list>
-      <list label="CPU Type:" id="M" default="0" action="cold_reset_hide">
- <listentry label="6502" value="0"/>
- <listentry label="65C02" value="1"/>
+      <list label="Video std" id="E" default="1" action="cold_reset_hide">
+	<listentry label="PAL" value="0"/>
+	<listentry label="NTSC" value="1"/>
       </list>
-      <list label="Monitor:" id="C" default="0">
- <listentry label="Color" value="0"/>
- <listentry label="B&amp;W" value="1"/>
- <listentry label="Green" value="2"/>
- <listentry label="Amber" value="3"/>
+      <list label="Video ROM" id="G" default="0">
+	<listentry label="US" value="0"/>
+	<listentry label="Local" value="1"/>
       </list>
-      <list label="Color palette:" id="D" default="0">
- <listentry label="NTSC //e" value="0"/>
- <listentry label="IIgs" value="1"/>
- <listentry label="AppleWin" value="2"/>
- <listentry label="Custom" value="3"/>
-      </list>
-      <list label="SSC S2:" id="U" default="1" action="cold_reset_hide">
- <listentry label="Off" value="0"/>
- <listentry label="On" value="1"/>
-      </list>
-      <list label="Mocking S4:" id="X" default="1" action="cold_reset_hide">
- <listentry label="Off" value="0"/>
- <listentry label="On" value="1"/>
-      </list>
-      <list label="Mouse S5:" id="Y" default="1" action="cold_reset_hide">
- <listentry label="Off" value="0"/>
- <listentry label="On" value="1"/>
-      </list>
-      <list label="HDD S7:" id="N" default="1" action="cold_reset_hide">
- <listentry label="Off" value="0"/>
- <listentry label="On" value="1"/>
-      </list>
-      <list label="Video Rom:" id="G" default="0">
- <listentry label="US" value="0"/>
- <listentry label="Local" value="1"/>
-      </list>
-      <list label="Video Std:" id="E" default="1" action="cold_reset_hide">
- <listentry label="PAL" value="0"/>
- <listentry label="NTSC" value="1"/>
-      </list>
-      <list label="Analog X/Y:" id="I" default="0">
- <listentry label="Normal" value="0"/>
- <listentry label="Swapped" value="1"/>
-      </list>
-      <list label="Data Bits:" id="V" default="0">
- <listentry label="8" value="0"/>
- <listentry label="7" value="1"/>
-      </list>
-      <list label="Parity:" id="!" default="0">
- <listentry label="Off" value="0"/>
- <listentry label="Odd" value="1"/>
- <listentry label="Even" value="2"/>
-      </list>
-      <list label="Baud Rate:" id="&amp;" default="14">
- <listentry label="115200" value="0"/>
- <listentry label="50" value="1"/>
- <listentry label="75" value="2"/>
- <listentry label="110" value="3"/>
- <listentry label="135" value="4"/>
- <listentry label="150" value="5"/>
- <listentry label="300" value="6"/>
- <listentry label="600" value="7"/>
- <listentry label="1200" value="8"/>
- <listentry label="1800" value="9"/>
- <listentry label="2400" value="10"/>
- <listentry label="3600" value="11"/>
- <listentry label="4800" value="12"/>
- <listentry label="7200" value="13"/>
- <listentry label="9600" value="14"/>
- <listentry label="19200" value="15"/>
-      </list>
-      <list label="SSC Irq:" id="=" default="0">
- <listentry label="Off" value="0"/>
- <listentry label="On" value="1"/>
-      </list>
-      <list label="SSC LF CR:" id="?" default="1">
- <listentry label="Off" value="0"/>
- <listentry label="On" value="1"/>
-      </list>
-      <list label="RS232 port:" id="*" default="0">
- <listentry label="Tang USB-C" value="0"/>
- <listentry label="External" value="1"/>
- <listentry label="WIFI Modem" value="2"/>
-      </list>
-      <list label="Lo-Res Text:" id="(" default="0">
- <listentry label="Clean" value="0"/>
- <listentry label="Composite" value="1"/>
-      </list>
- <button label="Cold Boot" action="cold_reset_hide"/>
-    </menu>
-    <menu label="Storage">
-      <fileselector label="Disk 0:" ext="nib;dsk;do;po" index="0" default="disk0.nib"/>
-      <fileselector label="Disk 1:" ext="nib;dsk;do;po" index="1" default="disk1.nib"/>
-      <fileselector label="HDD:" ext="hdv" index="2" default="hdd.hdv"/>
-      <fileselector label="Load Video ROM:" ext="bin" index="3"/>
-      <fileselector label="Load Palette:" ext="a2p" index="4"/>
-      <list label="Disk prot.:" id="P" default="0">
+      <menu label="Slot cards">
+	<list label="S2 Serial" id="U" default="1" action="cold_reset_hide">
+	  <listentry label="Off" value="0"/>
+	  <listentry label="On" value="1"/>
+	</list>
+	<list label="S4 Mockingbd" id="X" default="1" action="cold_reset_hide">
+	  <listentry label="Off" value="0"/>
+	  <listentry label="On" value="1"/>
+	</list>
+	<list label="S5 Mouse" id="Y" default="1" action="cold_reset_hide">
+	  <listentry label="Off" value="0"/>
+	  <listentry label="On" value="1"/>
+	</list>
+	<list label="S7 Hard disk" id="N" default="1" action="cold_reset_hide">
+	  <listentry label="Off" value="0"/>
+	  <listentry label="On" value="1"/>
+	</list>
+      </menu>
+      <list label="Disk protect" id="P" default="0">
 	<listentry label="None" value="0"/>
-	<listentry label="Disk 0" value="1"/>
-	<listentry label="Disk 1" value="2"/>
-	<listentry label="Disk 0&amp;1" value="3"/>
+	<listentry label="Disk 1" value="1"/>
+	<listentry label="Disk 2" value="2"/>
+	<listentry label="Both" value="3"/>
       </list>
-      <list label="HDD prot.:" id="J" default="1">
+      <list label="HDD protect" id="J" default="1">
 	<listentry label="Off" value="0"/>
 	<listentry label="On" value="1"/>
       </list>
     </menu>
-    <menu label="Settings">
-      <list label="Screen:" id="W" default="0">
+    <menu label="Display">
+      <list label="Monitor" id="C" default="0">
+	<listentry label="Color" value="0"/>
+	<listentry label="B&amp;W" value="1"/>
+	<listentry label="Green" value="2"/>
+	<listentry label="Amber" value="3"/>
+      </list>
+      <list label="Palette" id="D" default="0">
+	<listentry label="NTSC //e" value="0"/>
+	<listentry label="IIgs" value="1"/>
+	<listentry label="AppleWin" value="2"/>
+	<listentry label="Custom" value="3"/>
+      </list>
+      <list label="Screen" id="W" default="0">
 	<listentry label="Standard" value="0"/>
 	<listentry label="Overscan" value="1"/>
 	<listentry label="Wide" value="2"/>
       </list>
-      <list label="Scanlines:" id="S" default="0">
+      <list label="Scanlines" id="S" default="0">
 	<listentry label="None" value="0"/>
 	<listentry label="25%" value="1"/>
 	<listentry label="50%" value="2"/>
 	<listentry label="75%" value="3"/>
       </list>
-      <list label="Volume:" id="A" default="7">
-	<listentry label="0" value="0"/>
-	<listentry label="1" value="1"/>
-	<listentry label="2" value="2"/>
-	<listentry label="3" value="3"/>
-	<listentry label="4" value="4"/>
-	<listentry label="5" value="5"/>
-	<listentry label="6" value="6"/>
-	<listentry label="7" value="7"/>
-	<listentry label="8" value="8"/>
-	<listentry label="9" value="9"/>
-	<listentry label="10" value="10"/>
+      <list label="Lo-res text" id="(" default="0">
+	<listentry label="Clean" value="0"/>
+	<listentry label="Composite" value="1"/>
       </list>
-      <button label="Save settings" action="save"/>
+      <fileselector label="Palette file" ext="a2p" index="4"/>
+      <fileselector label="Video ROM file" ext="bin" index="3"/>
+    </menu>
+    <menu label="Controls">
+      <list label="Joyport" id="Q" default="0">
+	<listentry label="USB #1" value="0"/>
+	<listentry label="USB #2" value="1"/>
+	<listentry label="DS2 #1" value="2"/>
+	<listentry label="DS2 #2" value="3"/>
+	<listentry label="Mouse" value="4"/>
+	<listentry label="Off" value="5"/>
+      </list>
+      <list label="Analog X/Y" id="I" default="0">
+	<listentry label="Normal" value="0"/>
+	<listentry label="Swapped" value="1"/>
+      </list>
+    </menu>
+    <menu label="Serial">
+      <list label="Port" id="*" default="0">
+	<listentry label="Tang USB-C" value="0"/>
+	<listentry label="External" value="1"/>
+	<listentry label="WiFi modem" value="2"/>
+      </list>
+      <list label="Baud" id="&amp;" default="14">
+	<listentry label="115200" value="0"/>
+	<listentry label="50" value="1"/>
+	<listentry label="75" value="2"/>
+	<listentry label="110" value="3"/>
+	<listentry label="135" value="4"/>
+	<listentry label="150" value="5"/>
+	<listentry label="300" value="6"/>
+	<listentry label="600" value="7"/>
+	<listentry label="1200" value="8"/>
+	<listentry label="1800" value="9"/>
+	<listentry label="2400" value="10"/>
+	<listentry label="3600" value="11"/>
+	<listentry label="4800" value="12"/>
+	<listentry label="7200" value="13"/>
+	<listentry label="9600" value="14"/>
+	<listentry label="19200" value="15"/>
+      </list>
+      <list label="Data bits" id="V" default="0">
+	<listentry label="8" value="0"/>
+	<listentry label="7" value="1"/>
+      </list>
+      <list label="Parity" id="!" default="0">
+	<listentry label="Off" value="0"/>
+	<listentry label="Odd" value="1"/>
+	<listentry label="Even" value="2"/>
+      </list>
+      <list label="SSC IRQ" id="=" default="0">
+	<listentry label="Off" value="0"/>
+	<listentry label="On" value="1"/>
+      </list>
+      <list label="LF after CR" id="?" default="1">
+	<listentry label="Off" value="0"/>
+	<listentry label="On" value="1"/>
+      </list>
     </menu>
     <button label="Reset" action="reset_hide"/>
+    <button label="Cold reset" action="cold_reset_hide"/>
+    <!-- volume: changed with the companion's volume hotkeys, not shown in the menu -->
+    <list label="Volume" id="A" default="7" role="volume" hidden="true">
+      <listentry label="0" value="0"/>
+      <listentry label="1" value="1"/>
+      <listentry label="2" value="2"/>
+      <listentry label="3" value="3"/>
+      <listentry label="4" value="4"/>
+      <listentry label="5" value="5"/>
+      <listentry label="6" value="6"/>
+      <listentry label="7" value="7"/>
+      <listentry label="8" value="8"/>
+      <listentry label="9" value="9"/>
+      <listentry label="10" value="10"/>
+    </list>
   </menu>
 </config>

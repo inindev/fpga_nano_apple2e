@@ -14,7 +14,7 @@ module osd_u8g2 (
   input [7:0]  data_in,
 	    
   input        hs,
-  input        vs, 
+  input        vs,
   input [5:0]  r_in,
   input [5:0]  g_in,
   input [5:0]  b_in,
@@ -29,6 +29,9 @@ module osd_u8g2 (
 
 // OSD is enabled and visible
 reg enabled;
+// strip mode: only the bottom 16 lines of the buffer, shown near the
+// bottom of the screen (e.g. a volume bar). Set with bit 1 of command 1.
+reg strip;
 
 reg [5:0] r_out_i;
 reg [5:0] g_out_i;
@@ -63,23 +66,36 @@ assign b_out = b_out_i;
 `define WIDTH 16   // OSD width in characters
 `define HEIGHT 8   // OSD height in characters
 
-wire [11:0] hstart = (hcntL/2)-8*`WIDTH*`SCALE/2;
-wire [9:0]  vstart = (vcntL/2)-8*`HEIGHT*`SCALE/2;
+`define STRIP 16   // strip height in lines
+
+// Center on the visible picture, not on the whole line: counted from the
+// rising edge of hs, the picture center lies this many clocks after the line
+// center. Calculated from vga_controller.vhd's timing (VGA_HBL, VGA_HS)
+// through the scandoubler; the same for PAL and NTSC (912 14M cycles/line).
+`define HCENTER 55
+wire [11:0] hstart = (hcntL/2) + `HCENTER - 8*`WIDTH*`SCALE/2;
+
+// full OSD: centered. Strip: its bottom edge 3/8 of a frame below the
+// center, i.e. about 7/8 down the picture
+wire [10:0] vcntL3 = {1'b0, vcntL} + {vcntL, 1'b0};    // vcntL * 3
+wire [9:0]  vstart = strip ? (vcntL/2)+vcntL3[10:3]-`STRIP*`SCALE
+                           : (vcntL/2)-8*`HEIGHT*`SCALE/2;
+wire [9:0]  vsize  = strip ? `STRIP*`SCALE : 8*`HEIGHT*`SCALE;
 
 // entire OSD area incl border
 wire	    hactive = hcnt >= hstart-`SCALE*`BORDER && hcnt < hstart+`SCALE*`BORDER+8*`WIDTH*`SCALE;
-wire	    vactive = vcnt >= vstart-`SCALE*`BORDER && vcnt < vstart+`SCALE*`BORDER+8*`HEIGHT*`SCALE;
-assign      active = hactive && vactive;  
+wire	    vactive = vcnt >= vstart-`SCALE*`BORDER && vcnt < vstart+`SCALE*`BORDER+vsize;
+assign      active = hactive && vactive;
 
 // text area of OSD
 wire	    thactive = hcnt >= hstart && hcnt < hstart+8*`WIDTH*`SCALE;
-wire	    tvactive = vcnt >= vstart && vcnt < vstart+8*`HEIGHT*`SCALE;
-assign 	    tactive = thactive && tvactive;  
+wire	    tvactive = vcnt >= vstart && vcnt < vstart+vsize;
+assign 	    tactive = thactive && tvactive;
 
 // shadow area of OSD
 wire	    shactive = hcnt >= hstart-`SCALE*`BORDER+`SCALE*`SHADOW && hcnt < hstart+`SCALE*`BORDER+`SCALE*`SHADOW+8*`WIDTH*`SCALE;
-wire	    svactive = vcnt >= vstart-`SCALE*`BORDER+`SCALE*`SHADOW && vcnt < vstart+`SCALE*`BORDER+`SCALE*`SHADOW+8*`HEIGHT*`SCALE;
-assign	    sactive = shactive && svactive;  
+wire	    svactive = vcnt >= vstart-`SCALE*`BORDER+`SCALE*`SHADOW && vcnt < vstart+`SCALE*`BORDER+`SCALE*`SHADOW+vsize;
+assign	    sactive = shactive && svactive;
 
 // 1024 bytes = 8192 pixels = 128 x 64 pixels
 reg [7:0] buffer [1024];
@@ -92,6 +108,7 @@ reg data_addr_state;
 always @(posedge clk) begin
     if(reset) begin
         enabled <= 1'b0;
+        strip <= 1'b0;
         r_out_i <=  6'd0;
         g_out_i <=  6'd0;
         b_out_i <=  6'd0;
@@ -110,9 +127,12 @@ always @(posedge clk) begin
         end else begin
             data_addr_state <= 1'b0;
 
-            // OSD command 1: enabled (show) or disable (hide) OSD
-            if((command == 8'd1) && data_addr_state)
+            // OSD command 1: enabled (show) or disable (hide) OSD,
+            // bit 1 selects the strip at the bottom of the screen
+            if((command == 8'd1) && data_addr_state) begin
                 enabled <= data_in[0];   // en/disable
+                strip <= data_in[1];
+            end
 
             // OSD command 2: display data for give tile
             if(command == 8'd2) begin
@@ -130,7 +150,8 @@ end
    
 wire [7:0] hpix  = hcnt-hstart;  // horizontal pixel position inside OSD   
 wire [7:0] hpixD = hpix+1;       // latch byte one pixel in advance
-wire [6:0] vpix  = vcnt-vstart;  // vertical pixel position inside OSD   
+// vertical pixel position inside OSD, the strip shows buffer lines 48..63
+wire [6:0] vpix  = vcnt-vstart+(strip ? 7'd96 : 7'd0);
 
 reg [7:0] buffer_byte;
 assign osd_pix = buffer_byte[vpix[3:1]];
