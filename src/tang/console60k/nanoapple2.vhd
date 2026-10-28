@@ -300,7 +300,7 @@ signal system_reset   : std_logic_vector(1 downto 0);
 signal kbd_strobe     : std_logic;
 signal system_screen  : std_logic_vector(1 downto 0);
 signal system_scanlines : std_logic_vector(1 downto 0);
-signal system_volume  : std_logic_vector(1 downto 0);
+signal system_volume  : std_logic_vector(3 downto 0);
 signal sd_img_size    : std_logic_vector(63 downto 0);
 signal sd_img_format  : std_logic_vector(1 downto 0);
 signal DISK_FMT0, DISK_FMT1 : std_logic_vector(1 downto 0);

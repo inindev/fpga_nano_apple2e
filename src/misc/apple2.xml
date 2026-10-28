@@ -178,11 +178,18 @@
 	<listentry label="50%" value="2"/>
 	<listentry label="75%" value="3"/>
       </list>
-      <list label="Volume:" id="A" default="2">
-	<listentry label="Mute" value="0"/>
-	<listentry label="33%" value="1"/>
-	<listentry label="66%" value="2"/>
-	<listentry label="100%" value="3"/>
+      <list label="Volume:" id="A" default="7">
+	<listentry label="0" value="0"/>
+	<listentry label="1" value="1"/>
+	<listentry label="2" value="2"/>
+	<listentry label="3" value="3"/>
+	<listentry label="4" value="4"/>
+	<listentry label="5" value="5"/>
+	<listentry label="6" value="6"/>
+	<listentry label="7" value="7"/>
+	<listentry label="8" value="8"/>
+	<listentry label="9" value="9"/>
+	<listentry label="10" value="10"/>
       </list>
       <button label="Save settings" action="save"/>
     </menu>

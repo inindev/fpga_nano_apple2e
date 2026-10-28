@@ -31,7 +31,7 @@ module video
 
    // values that can be configure by the user via osd          
    input [1:0]  system_scanlines,
-   input [1:0]  system_volume,
+   input [3:0]  system_volume,
    input     system_wide_screen,
 
    // digital video out for lcd
@@ -132,18 +132,18 @@ always @(posedge clk) begin
 	aro <= ^arm[16:15] ? {arm[16], {15{arm[15]}}} : arm[15:0];
 end
 
-// scale audio for valume by signed division
-wire [15:0] audio_vol_l = 
-    (system_volume == 2'd0)?16'd0:
-    (system_volume == 2'd1)?{ {2{alo[15]}}, alo[15:2] }:
-    (system_volume == 2'd2)?{ alo[15], alo[15:1] }:
-    alo;
+// scale audio by volume/10, volume 0..10: multiply by round(volume*25.6), then /256
+wire [8:0] vol_k =
+    (system_volume == 4'd0) ? 9'd0   : (system_volume == 4'd1) ? 9'd26  :
+    (system_volume == 4'd2) ? 9'd51  : (system_volume == 4'd3) ? 9'd77  :
+    (system_volume == 4'd4) ? 9'd102 : (system_volume == 4'd5) ? 9'd128 :
+    (system_volume == 4'd6) ? 9'd154 : (system_volume == 4'd7) ? 9'd179 :
+    (system_volume == 4'd8) ? 9'd205 : (system_volume == 4'd9) ? 9'd230 : 9'd256;
 
-wire [15:0] audio_vol_r = 
-    (system_volume == 2'd0)?16'd0:
-    (system_volume == 2'd1)?{ {2{aro[15]}}, aro[15:2] }:
-    (system_volume == 2'd2)?{ aro[15], aro[15:1] }:
-    aro;
+wire signed [25:0] audio_prod_l = $signed(alo) * $signed({1'b0, vol_k});
+wire signed [25:0] audio_prod_r = $signed(aro) * $signed({1'b0, vol_k});
+wire [15:0] audio_vol_l = audio_prod_l[23:8];
+wire [15:0] audio_vol_r = audio_prod_r[23:8];
 
 // clk_div <= (ntscmode?32500000:31500000); // GW5A
 // clk_div <= (ntscmode?32940000:31500000); // TN20k
