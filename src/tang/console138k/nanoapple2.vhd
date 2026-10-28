@@ -582,8 +582,8 @@ gamepad_p1: entity work.dualshock2
     debug2        => open
     );
 
-joyUsb1    <= "00" & joystick0(5 downto 4) & x"0";
-joyUsb2    <= "00" & joystick1(5 downto 4) & x"0";
+joyUsb1    <= "00" & joystick0(4) & joystick0(6) & x"0";  -- button 0: Y (left), button 1: B (bottom), as on DS2
+joyUsb2    <= "00" & joystick1(4) & joystick1(6) & x"0";
 joyDS2_p1  <= "00" & key_cross  & key_square  & x"0";
 joyDS2_p2  <= "00" & key_cross2 & key_square2 & x"0";
 joyMouse   <= "00" & mouse_btns & x"0";
