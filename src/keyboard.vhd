@@ -110,8 +110,8 @@ keyboard_rom : entity work.Gowin_pROM_key
     if reset = '1' then
       shift <= '0';
       ctrl <= '0';
-      --open_apple<='0';
-      --closed_apple<='0';
+      open_apple <= '0';
+      closed_apple <= '0';
 		soft_reset<='0';
 		video_toggle<='0';
 		palette_toggle<='0';
@@ -161,7 +161,7 @@ keyboard_rom : entity work.Gowin_pROM_key
 -- ps2_key <= {~ps2_key[10], pressed, extended, ps2_key_raw[7:0]};
 
  PS2_Key(9) <= not usb_key(7);
- PS2_Key(10) <= not kbd_strobeD1;
+ PS2_Key(10) <= kbd_strobeD1;        -- toggles on every key event; idle level 0, as hid.v resets it
 
   fsm : process (CLK_14M, reset)
   begin
@@ -170,6 +170,9 @@ keyboard_rom : entity work.Gowin_pROM_key
       latched_code <= (others => '0');
       latched_ext <= '0';
       key_pressed <= '0';
+      akd <= '0';
+      old_stb <= '0';
+      rep_timer <= (others => '0');
     elsif rising_edge(CLK_14M) then
       kbd_strobeD <= kbd_strobe;
       kbd_strobeD1 <= kbd_strobeD;
